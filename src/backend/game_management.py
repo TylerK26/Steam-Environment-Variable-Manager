@@ -68,6 +68,10 @@ def get_game_env_vars(game_ids: list[int]) -> dict:
                 dict_of_vars[get_game_name(i)] = temp_list
             except KeyError:
                 print("This game does not have launch options yet, making keys now")
+                # Go to key in vdf, make launchoptions with empty string as value, save to currently open vdf
+                # I honestly can't believe I did this first try without breaking anything
+                f['UserLocalConfigStore']['Software']['Valve']['Steam']['apps'][str(i)]['LaunchOptions'] = ''
+                vdf.dump(f, file, pretty=True)
     print(dict_of_vars)
 
 
