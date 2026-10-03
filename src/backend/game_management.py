@@ -3,28 +3,27 @@
    Fetching their current environment variables
    Saving their environment variables"""
 
-import requests
+from typing import Optional
 import os
+import requests
 import vdf
 
 # Each game will get it's own object
 class Game:
+    """Creates game for future UI which includes it's name, 
+            steam id, and current environment variables"""
     def __init__(self, title: str, proton_id: int, variable_list: list[str]) -> None:
-        """Creates game for future UI which includes it's name, 
-        steam id, and current environment variables"""
         self.title = title
         self.id = proton_id
         self.vars = variable_list
+    def __str__(self) -> str:
+        return self.title
 
-game_ids = list[int]
-games = list[Game]
-
-def get_game_name(game_id: int) -> str:
+def get_game_name(game_id: int) -> Optional[str]:
     """Get game name from game id"""
     game_url = f"https://store.steampowered.com/api/appdetails?appids={game_id}"
-
     try:
-        response = requests.get(game_url)
+        response = requests.get(game_url, timeout=5)
         response.raise_for_status()
         data = response.json()
         game_name = str(data[str(game_id)]['data']['name'])
@@ -32,7 +31,7 @@ def get_game_name(game_id: int) -> str:
     except requests.exceptions.RequestException as e:
         print(f"An error occured for this game: {e}")
     except KeyError:
-        return None
+        pass
 
 def get_game_ids(path: str) -> list[int]:
     """Make list of all game ids to later create objects of"""
@@ -44,7 +43,7 @@ def get_game_ids(path: str) -> list[int]:
                 game_ids_fun.append(int(folder.name))
     return game_ids_fun
 
-def get_game_env_vars(game_ids: list[int]) -> dict:
+def get_game_env_vars(game_ids: list[int]) -> dict[str, list[str]]:
     """Get all environment variables for each game, it's a list of lists which I find scary
        I'm so happy there's a vdf parser package that I can use because I did NOT want 
        to have to do that myself"""
@@ -71,22 +70,26 @@ def get_game_env_vars(game_ids: list[int]) -> dict:
                 # Go to key in vdf, make launchoptions with empty string as value, save to currently open vdf
                 # I honestly can't believe I did this first try without breaking anything
                 f['UserLocalConfigStore']['Software']['Valve']['Steam']['apps'][str(i)]['LaunchOptions'] = ''
+                dict_of_vars[get_game_name(i)] = []
                 vdf.dump(f, file, pretty=True)
-    print(dict_of_vars)
+    return dict_of_vars
 
 
-# This can be done later when I can actually get environment variables
-#def create_game_objects(game_ids: list[int]) -> list[Game]:
-#    """Create all instances of Game needed for each game in game_ids"""
-#    temp_games = list[Game]
-#    for i in game_ids:
-#        temp_title = get_game_name(i)
-#        # To be continuted when I can actually get game variables
-#        temp_game = Game(temp_title, i, )
+def create_game_objects(game_ids: list[int]) -> list[Game]:
+    """Create all instances of Game needed for each game in game_ids"""
+    temp_games: list[Game] = []
+    game_environment_vars = get_game_env_vars(game_ids)
+    for i in game_ids:
+        title = get_game_name(i)
+        for key in game_environment_vars:
+            if key == title:
+                temp_game = Game(title, i, game_environment_vars[key])
+                temp_games.append(temp_game)
+        
 
 def main() -> None:
-    id_list = get_game_ids("/home/tylerk/.steam/steam/steamapps/compatdata/")
-    get_game_env_vars(id_list)
+    """Since this only runs when calling the file directly, I can just use this
+    area for testing new features I might be implementing"""
 
 if __name__ == "__main__":
     main()
