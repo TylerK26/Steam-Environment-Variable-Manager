@@ -3,7 +3,7 @@
    Fetching their current environment variables
    Saving their environment variables"""
 
-import os
+from pathlib import Path
 import requests
 import vdf
 
@@ -32,14 +32,13 @@ def get_game_name(game_id: int) -> str:
     except KeyError:
         pass
 
-def get_game_ids(path: str) -> list[int]:
+def get_game_ids(path: Path) -> list[int]:
     """Make list of all game ids to later create objects of"""
     game_ids = []
     # Check all compatdata folders
-    with os.scandir(path) as game_folder:
-        for folder in game_folder:
-            if folder.is_dir() and int(folder.name) != 0:
-                game_ids.append(int(folder.name))
+    for folder in path.iterdir():
+        if int(folder.name) != 0:
+            game_ids.append(int(folder.name))
     return game_ids
 
 def get_game_env_vars(game_ids: list[int], directory: str) -> dict[str, list[str]]:
@@ -89,10 +88,10 @@ def create_game_objects(game_ids: list[int], directory: str) -> list[Game]:
 def main() -> None:
     """Since this only runs when calling the file directly, I can just use this
     area for testing new features I might be implementing"""
-    #ids = get_game_ids('/home/tylerk/.steam/steam/steamapps/compatdata/')
-    #temp = create_game_objects(ids, '/home/tylerk/.steam/steam/userdata/448133338/config/')
-    #for i in temp:
-    #    print(f"Game: {i.title}, ID: {i.id}, Vars: {i.vars}")
+    ids = get_game_ids(Path('/home/tylerk/.steam/steam/steamapps/compatdata/'))
+    temp = create_game_objects(ids, '/home/tylerk/.steam/steam/userdata/448133338/config/')
+    for i in temp:
+        print(f"Game: {i.title}, ID: {i.id}, Vars: {i.vars}")
 
 
 if __name__ == "__main__":
