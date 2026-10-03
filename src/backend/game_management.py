@@ -44,18 +44,32 @@ def get_game_ids(path: str) -> list[int]:
                 game_ids_fun.append(int(folder.name))
     return game_ids_fun
 
-def get_game_env_vars(game_ids: list[int]) -> list[list[str]]:
+def get_game_env_vars(game_ids: list[int]) -> dict:
     """Get all environment variables for each game, it's a list of lists which I find scary
        I'm so happy there's a vdf parser package that I can use because I did NOT want 
        to have to do that myself"""
     # I'm going to hard code this directory for now, but later I definitely need to not do that so
     # Other people can actually use the software
-    main_list = list[list[str]]
+    dict_of_vars = {}
     for i in game_ids:
-        temp_list = list[str]
-        with open("/home/tylerk/.local/share/Steam/userdata/448133338/config/localconfig.vdf", 'r') as file:
+        temp_list: list[str] = []
+        with open("/home/tylerk/.local/share/Steam/userdata/448133338/config/localconfig.vdf", 'r+', encoding="utf-8") as file:
             f = vdf.load(file)
-            print(f['UserLocalConfigStore']['Software']['Valve']['Steam']['apps'][str(i)])
+            app_info = f['UserLocalConfigStore']['Software']['Valve']['Steam']['apps'][str(i)]
+            try:
+                # Get environment variables as string, separate them as individual parts of a list,
+                # Then make key-value pair in dictionary for each game
+                env_vars_str = app_info['LaunchOptions']
+                env_vars_list = env_vars_str.strip().split()
+                for word in env_vars_list:
+                    if word == "%command%":
+                        break
+                    temp_list.append(word)
+                dict_of_vars[get_game_name(i)] = temp_list
+            except KeyError:
+                print("This game does not have launch options yet, making keys now")
+    print(dict_of_vars)
+
 
 # This can be done later when I can actually get environment variables
 #def create_game_objects(game_ids: list[int]) -> list[Game]:
