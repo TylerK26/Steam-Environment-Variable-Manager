@@ -41,7 +41,7 @@ def get_game_ids(path: Path) -> list[int]:
             game_ids.append(int(folder.name))
     return game_ids
 
-def get_game_env_vars(game_ids: list[int], directory: str) -> dict[str, list[str]]:
+def get_game_env_vars(game_ids: list[int], directory: Path) -> dict[str, list[str]]:
     """Get all environment variables for each game, it's a list of lists which I find scary
        I'm so happy there's a vdf parser package that I can use because I did NOT want 
        to have to do that myself"""
@@ -50,7 +50,8 @@ def get_game_env_vars(game_ids: list[int], directory: str) -> dict[str, list[str
     dict_of_vars = {}
     for i in game_ids:
         temp_list: list[str] = []
-        with open(f"{directory}localconfig.vdf", 'r+', encoding="utf-8") as file:
+        local_config = directory / 'localconfig.vdf'
+        with open(local_config, 'r+', encoding="utf-8") as file:
             f = vdf.load(file)
             app_info = f['UserLocalConfigStore']['Software']['Valve']['Steam']['apps'][str(i)]
             try:
@@ -73,7 +74,7 @@ def get_game_env_vars(game_ids: list[int], directory: str) -> dict[str, list[str
                 vdf.dump(f, file, pretty=True)
     return dict_of_vars
 
-def create_game_objects(game_ids: list[int], directory: str) -> list[Game]:
+def create_game_objects(game_ids: list[int], directory: Path) -> list[Game]:
     """Create all instances of Game needed for each game in game_ids"""
     temp_games: list[Game] = []
     game_environment_vars = get_game_env_vars(game_ids, directory)
@@ -88,10 +89,10 @@ def create_game_objects(game_ids: list[int], directory: str) -> list[Game]:
 def main() -> None:
     """Since this only runs when calling the file directly, I can just use this
     area for testing new features I might be implementing"""
-    ids = get_game_ids(Path('/home/tylerk/.steam/steam/steamapps/compatdata/'))
-    temp = create_game_objects(ids, '/home/tylerk/.steam/steam/userdata/448133338/config/')
-    for i in temp:
-        print(f"Game: {i.title}, ID: {i.id}, Vars: {i.vars}")
+    #ids = get_game_ids(Path('/home/tylerk/.steam/steam/steamapps/compatdata/'))
+    #temp = create_game_objects(ids, '/home/tylerk/.steam/steam/userdata/448133338/config/')
+    #for i in temp:
+    #    print(f"Game: {i.title}, ID: {i.id}, Vars: {i.vars}")
 
 
 if __name__ == "__main__":
