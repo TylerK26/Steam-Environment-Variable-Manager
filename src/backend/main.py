@@ -37,7 +37,7 @@ def main() -> None:
     # These should stay hardcoded cause the user doesn't get to decide
     # Where configs are saved, I do
     config_folder = Path('~/.config/proton_var_manager/').expanduser()
-    config_file = Path('~/.config/proton_var_manager/config.txt').expanduser()
+    config_file = Path('~/.config/proton_var_manager/config.json').expanduser()
 
     if not config_file.is_file():
         local_config_str: str = input('Please provide directory for ' \
