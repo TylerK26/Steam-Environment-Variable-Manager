@@ -17,6 +17,9 @@ class Game:
         self.vars = variable_list
     def __str__(self) -> str:
         return self.title
+    def get_id(self) -> int:
+        """Return proton id"""
+        return self.id
 
 def get_game_name(game_id: int) -> str:
     """Get game name from game id"""

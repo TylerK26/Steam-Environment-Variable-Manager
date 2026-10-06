@@ -48,12 +48,17 @@ def main() -> None:
 
         create_config_file(config_folder, config_file, compat_str, local_config_str)
         populate_config(config_file)
+
     with open(config_file, 'r', encoding='utf-8') as file:
         f = json.load(file)
     local_config = Path(f['config']['local_config_path'])
     compat_path = Path(f['config']['compat_path'])
     game_ids = get_game_ids(compat_path)
     games = create_game_objects(game_ids, local_config, f, use_local=True)
+    # Ok, it's time to get to the scary stuff. I've never made a full
+    # on gui app before, so this will be my first time
+    # That's a task for tomorrow though, or maybe a few days from now
+    # Whenever I get time
 
 
 if __name__ == "__main__":
