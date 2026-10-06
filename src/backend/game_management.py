@@ -3,7 +3,6 @@
    Fetching their current environment variables
    Saving their environment variables"""
 
-import json
 from pathlib import Path
 import requests
 import vdf
