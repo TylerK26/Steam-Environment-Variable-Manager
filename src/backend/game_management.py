@@ -3,6 +3,7 @@
    Fetching their current environment variables
    Saving their environment variables"""
 
+import json
 from pathlib import Path
 import requests
 import vdf
@@ -74,9 +75,18 @@ def get_game_env_vars(game_ids: list[int], directory: Path) -> dict[str, list[st
                 vdf.dump(f, file, pretty=True)
     return dict_of_vars
 
-def create_game_objects(game_ids: list[int], directory: Path) -> list[Game]:
+def create_game_objects(game_ids: list[int], directory: Path, local_json: dict, use_local: bool = False) -> list[Game]:
     """Create all instances of Game needed for each game in game_ids"""
     temp_games: list[Game] = []
+    if use_local:
+        local_games = local_json['games']
+        count = 1
+        for key in local_games:
+            if key == 'null':
+                continue
+            temp_games.append(Game(key, game_ids[count], local_games[key]))
+            count += 1
+        return temp_games
     game_environment_vars = get_game_env_vars(game_ids, directory)
     for i in game_ids:
         title = get_game_name(i)

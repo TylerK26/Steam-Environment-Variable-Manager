@@ -22,28 +22,24 @@ def create_config_file(config_folder: Path, config_file: Path,
         json.dump(temp_json, file, indent=4)
         
 
-def populate_config(config_file: Path, compat_path: Path, local_config_path: Path) -> None:
+def populate_config(config_file: Path) -> None:
     """Use functions from game_management to create dictionary for config"""
-    ids = get_game_ids(compat_path)
+    with open(config_file, 'r', encoding='utf-8') as file:
+        f = json.load(file)
+    game_ids = get_game_ids(Path(f['config']['compat_path']))
+    game_dictionary = get_game_env_vars(game_ids, Path(f['config']['local_config_path']))
+    f['games'] = game_dictionary
     with open(config_file, 'w', encoding='utf-8') as file:
-        game_list = create_game_objects(ids, local_config_path) 
+        json.dump(f, file, indent=4)
         
     
 def main() -> None:
-    # These will become a part of config in the future, so the user
-    # Doesn't need to always input compatdata path on startup
-    # And I'll automatically find user localconfig
-    # local_config_path = Path('/home/tylerk/.steam/steam/userdata/448133338/config/')
-    # compat_path = Path('/home/tylerk/.steam/steam/steamapps/compatdata/')
-
     # These should stay hardcoded cause the user doesn't get to decide
     # Where configs are saved, I do
     config_folder = Path('~/.config/proton_var_manager/').expanduser()
     config_file = Path('~/.config/proton_var_manager/config.txt').expanduser()
 
     if not config_file.is_file():
-        # This is a lot, but if the config file doesn't exist, it writes
-        # what the user gives, then gets games from there
         local_config_str: str = input('Please provide directory for ' \
         'localconfig.vdf, usually in /home/{user}/.steam/steam/userdata/{account id}/config/: ')
 
@@ -51,13 +47,13 @@ def main() -> None:
         'compatdata, usually in /home/{user}/.steam/steam/steamapps/compatdata/: ')
 
         create_config_file(config_folder, config_file, compat_str, local_config_str)
-        with open(config_file, 'r', encoding='utf-8') as file:
-            f = json.load(file)
-        game_ids = get_game_ids(Path(f['config']['compat_path']))
-        game_dictionary = get_game_env_vars(game_ids, Path(f['config']['local_config_path']))
-        f['games'] = game_dictionary
-        with open(config_file, 'w', encoding='utf-8') as file:
-            json.dump(f, file, indent=4)
+        populate_config(config_file)
+    with open(config_file, 'r', encoding='utf-8') as file:
+        f = json.load(file)
+    local_config = Path(f['config']['local_config_path'])
+    compat_path = Path(f['config']['compat_path'])
+    game_ids = get_game_ids(compat_path)
+    games = create_game_objects(game_ids, local_config, f, use_local=True)
 
 
 if __name__ == "__main__":
