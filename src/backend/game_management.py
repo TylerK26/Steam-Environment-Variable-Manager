@@ -35,25 +35,28 @@ def get_game_name(game_id: int) -> str:
     except KeyError:
         pass
 
-def get_game_ids(path: Path) -> list[int]:
+def get_game_image_url(game_id: int) -> str:
+    """Use game id to get it's cover image url from steam"""
+    return f"https://steamcdn-a.akamaihd.net/steam/apps/{game_id}/library_600x900_2x.jpg"
+
+def get_game_ids(compat_data_path: Path) -> list[int]:
     """Make list of all game ids to later create objects of"""
     game_ids = []
     # Check all compatdata folders
-    for folder in path.iterdir():
+    for folder in compat_data_path.iterdir():
         if int(folder.name) != 0:
             game_ids.append(int(folder.name))
     return game_ids
 
-def get_game_env_vars(game_ids: list[int], directory: Path) -> dict[str, list[str]]:
-    """Get all environment variables for each game, it's a list of lists which I find scary
+def get_game_env_vars(game_ids: list[int], local_config_path: Path) -> dict[str, list[str]]:
+    """Get all environment variables for each game, it's a dictionary of strings
+       and lists which I find scary
        I'm so happy there's a vdf parser package that I can use because I did NOT want 
        to have to do that myself"""
-    # I'm going to hard code this directory for now, but later I definitely need to not do that so
-    # Other people can actually use the software
     dict_of_vars = {}
     for i in game_ids:
         temp_list: list[str] = []
-        local_config = directory / 'localconfig.vdf'
+        local_config = local_config_path / 'localconfig.vdf'
         with open(local_config, 'r+', encoding="utf-8") as file:
             f = vdf.load(file)
             app_info = f['UserLocalConfigStore']['Software']['Valve']['Steam']['apps'][str(i)]
@@ -77,19 +80,23 @@ def get_game_env_vars(game_ids: list[int], directory: Path) -> dict[str, list[st
                 vdf.dump(f, file, pretty=True)
     return dict_of_vars
 
-def create_game_objects(game_ids: list[int], directory: Path, local_json: dict, use_local: bool = False) -> list[Game]:
+def create_game_objects(game_ids: list[int], local_config_path: Path,
+                         local_json: dict[str, dict[str, list[str]]],
+                           use_local: bool = False) -> list[Game]:
     """Create all instances of Game needed for each game in game_ids"""
     temp_games: list[Game] = []
     if use_local:
         local_games = local_json['games']
-        count = 1
+        count = 0
         for key in local_games:
             if key == 'null':
+                count += 1
                 continue
-            temp_games.append(Game(key, game_ids[count], local_games[key]))
+            else:
+                temp_games.append(Game(key, game_ids[count], local_games[key]))
             count += 1
         return temp_games
-    game_environment_vars = get_game_env_vars(game_ids, directory)
+    game_environment_vars = get_game_env_vars(game_ids, local_config_path)
     for i in game_ids:
         title = get_game_name(i)
         for key in game_environment_vars.items():
